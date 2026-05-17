@@ -1,0 +1,1444 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>AhaTik Downloader - Baixar TikTok em Lote</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-secondary: #111111;
+            --bg-card: #1a1a1a;
+            --bg-card-hover: #222222;
+            --bg-input: #1a1a1a;
+            --border-color: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #6a6a6a;
+            --accent-tiktok: #25F4EE;
+            --accent-pink: #fe2c55;
+            --success: #00d4aa;
+            --error: #ff4757;
+            --radius: 12px;
+            --radius-lg: 16px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            --transition: 0.2s ease;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.5;
+            overflow-x: hidden;
+        }
+
+        /* Header */
+        .header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(10, 10, 10, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 20px;
+        }
+        .header-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #fe2c55, #25F4EE);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 800;
+        }
+        .logo-text span {
+            background: linear-gradient(135deg, #fe2c55, #25F4EE);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .watermark-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            background: var(--bg-card);
+            padding: 6px 12px;
+            border-radius: 30px;
+        }
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 22px;
+        }
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #3a3a3a;
+            transition: 0.3s;
+            border-radius: 30px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 2px;
+            bottom: 2px;
+            background-color: white;
+            transition: 0.3s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background: linear-gradient(135deg, #fe2c55, #25F4EE);
+        }
+        input:checked + .slider:before {
+            transform: translateX(22px);
+        }
+        .menu-btn {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            width: 40px;
+            height: 40px;
+            border-radius: 40px;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Drawer */
+        .drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 200;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.3s;
+        }
+        .drawer-overlay.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .drawer {
+            position: fixed;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            width: 300px;
+            background: var(--bg-secondary);
+            border-left: 1px solid var(--border-color);
+            transform: translateX(100%);
+            transition: 0.3s ease;
+            display: flex;
+            flex-direction: column;
+        }
+        .drawer-overlay.active .drawer {
+            transform: translateX(0);
+        }
+        .drawer-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .drawer-content {
+            flex: 1;
+            padding: 10px 0;
+        }
+        .drawer-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 14px 20px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .drawer-item:hover {
+            background: var(--bg-card);
+        }
+        .drawer-divider {
+            height: 1px;
+            background: var(--border-color);
+            margin: 10px 0;
+        }
+        .drawer-footer {
+            padding: 20px;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
+        }
+        .drawer-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Main */
+        .main-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Input */
+        .input-section {
+            margin-bottom: 24px;
+        }
+        .input-card {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 8px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 1px solid var(--border-color);
+            transition: 0.2s;
+        }
+        .input-card:focus-within {
+            border-color: var(--accent-pink);
+        }
+        .input-icon {
+            font-size: 1.4rem;
+            color: var(--accent-pink);
+        }
+        .url-input {
+            flex: 1;
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1rem;
+            padding: 14px 0;
+            outline: none;
+        }
+        .url-input::placeholder {
+            color: var(--text-muted);
+        }
+        .btn-download {
+            background: linear-gradient(135deg, #fe2c55, #fe2c55);
+            border: none;
+            padding: 10px 24px;
+            border-radius: 40px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .btn-download:hover {
+            opacity: 0.9;
+        }
+        .btn-download .spinner {
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            display: none;
+            animation: spin 0.6s linear infinite;
+        }
+        .btn-download.loading .spinner {
+            display: block;
+        }
+        .btn-download.loading .btn-text {
+            display: none;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .input-note {
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+        }
+
+        /* Quick Access */
+        .quick-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 0.85rem;
+        }
+        .quick-header h3 {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .quick-grid {
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+            padding-bottom: 8px;
+        }
+        .quick-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 12px;
+            min-width: 100px;
+            text-align: center;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            transition: 0.2s;
+        }
+        .quick-card:hover {
+            border-color: var(--accent-tiktok);
+        }
+        .quick-avatar {
+            font-size: 2rem;
+            margin-bottom: 6px;
+        }
+        .quick-name {
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .quick-desc {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+
+        /* Profile */
+        .profile-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        .profile-header {
+            background: var(--bg-card);
+            border-radius: var(--radius-lg);
+            padding: 16px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+        .profile-avatar img {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--accent-pink);
+        }
+        .profile-info h2 {
+            font-size: 1.2rem;
+        }
+        .profile-info p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .profile-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 6px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .videos-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+        .video-card {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: 0.2s;
+            border: 2px solid transparent;
+        }
+        .video-card:hover {
+            transform: translateY(-3px);
+        }
+        .video-card.original {
+            border-color: var(--accent-tiktok);
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(37, 244, 238, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(37, 244, 238, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(37, 244, 238, 0); }
+        }
+        .video-thumb {
+            position: relative;
+            aspect-ratio: 9/16;
+        }
+        .video-thumb img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .video-duration {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            background: rgba(0,0,0,0.7);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+        .video-stats {
+            padding: 6px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            display: flex;
+            justify-content: space-between;
+        }
+        .batch-download-btn {
+            background: linear-gradient(135deg, #fe2c55, #25F4EE);
+            border: none;
+            padding: 12px;
+            margin: 16px 0;
+            border-radius: 40px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        /* Downloads */
+        .downloads-section {
+            display: none;
+            margin-top: 20px;
+        }
+        .downloads-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+        .downloads-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .download-item {
+            background: var(--bg-card);
+            border-radius: var(--radius);
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .download-thumb {
+            width: 50px;
+            height: 66px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+        .download-info {
+            flex: 1;
+        }
+        .download-title {
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+        .download-progress {
+            height: 4px;
+            background: #333;
+            border-radius: 4px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .download-progress-bar {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(135deg, #fe2c55, #25F4EE);
+            transition: width 0.2s;
+        }
+        .download-status {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        .btn-clear-small {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 20px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 0.7rem;
+        }
+
+        /* Modal */
+        .modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            z-index: 300;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            visibility: hidden;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        .modal.active {
+            visibility: visible;
+            opacity: 1;
+        }
+        .modal-content {
+            background: var(--bg-secondary);
+            border-radius: var(--radius-lg);
+            max-width: 90%;
+            width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .modal-body {
+            padding: 16px;
+        }
+        .modal-video {
+            width: 100%;
+            border-radius: var(--radius);
+        }
+        .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin: 16px 0;
+        }
+        .btn-modal {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 40px;
+            color: white;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .btn-modal:hover {
+            border-color: var(--accent-pink);
+        }
+        .modal-info {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 400;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: #1a1a1a;
+            border-left: 4px solid var(--accent-tiktok);
+            padding: 14px 18px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.3s ease;
+            pointer-events: auto;
+        }
+        .toast.success { border-left-color: var(--success); }
+        .toast.error { border-left-color: var(--error); }
+        .toast-icon {
+            font-size: 1.2rem;
+        }
+        .toast-message {
+            flex: 1;
+            font-size: 0.85rem;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .load-more {
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .spinner-small {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #333;
+            border-top-color: var(--accent-tiktok);
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (max-width: 600px) {
+            .videos-grid { grid-template-columns: repeat(2, 1fr); }
+            .watermark-toggle span { display: none; }
+            .logo-text { font-size: 1.2rem; }
+        }
+        @media (max-width: 400px) {
+            .videos-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-inner">
+            <div class="logo">
+                <div class="logo-icon"><i class="fab fa-tiktok"></i></div>
+                <div class="logo-text">Aha<span>Tik</span></div>
+            </div>
+            <div class="header-controls">
+                <div class="watermark-toggle">
+                    <span><i class="fas fa-water"></i> S/ Marca</span>
+                    <label class="switch">
+                        <input type="checkbox" id="watermarkToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <button class="menu-btn" id="menuBtn"><i class="fas fa-bars"></i></button>
+            </div>
+        </div>
+    </header>
+
+    <div class="drawer-overlay" id="drawerOverlay">
+        <div class="drawer" id="drawer">
+            <div class="drawer-header">
+                <h3><i class="fas fa-cog"></i> Configurações</h3>
+                <button class="drawer-close" id="drawerClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="drawer-content">
+                <div class="drawer-item">
+                    <span><i class="fas fa-water"></i> Remover Marca d'Água</span>
+                    <label class="switch">
+                        <input type="checkbox" id="drawerWatermarkToggle" checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="drawer-item">
+                    <span><i class="fas fa-download"></i> Download Automático</span>
+                    <label class="switch">
+                        <input type="checkbox" id="autoDownloadToggle">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div class="drawer-divider"></div>
+                <div class="drawer-item">
+                    <span><i class="fas fa-headset"></i> Serviço ao Cliente</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="drawer-item">
+                    <span><i class="fas fa-comments"></i> Grupo de Feedback</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+                <div class="drawer-item">
+                    <span><i class="fas fa-question-circle"></i> Como baixar</span>
+                    <i class="fas fa-chevron-right"></i>
+                </div>
+            </div>
+            <div class="drawer-footer">
+                <p>Respeite o trabalho dos criadores</p>
+            </div>
+        </div>
+    </div>
+
+    <main class="main-container">
+        <section class="input-section">
+            <div class="input-card">
+                <div class="input-icon"><i class="fab fa-tiktok"></i></div>
+                <input type="text" id="urlInput" class="url-input" 
+                    placeholder="Colar o link do TikTok aqui"
+                    autocomplete="off">
+                <button class="btn-download" id="btnProcess">
+                    <span class="spinner"></span>
+                    <span class="btn-text"><i class="fas fa-download"></i> Baixar</span>
+                </button>
+            </div>
+            <div class="input-note">
+                <i class="fas fa-shield-alt"></i> Respeite o trabalho dos criadores e os direitos de propriedade intelectual.
+            </div>
+        </section>
+
+        <section class="quick-access">
+            <div class="quick-header">
+                <h3><i class="fas fa-fire"></i> Frequentemente baixado</h3>
+                <span>Baixe mais dos seus vídeos favoritos em lotes <i class="fas fa-arrow-right"></i></span>
+            </div>
+            <div class="quick-grid" id="quickGrid">
+                <div class="quick-card" data-user="resumindo">
+                    <div class="quick-avatar">📺</div>
+                    <div class="quick-name">Resumindo</div>
+                    <div class="quick-desc">Entre Pensamentos</div>
+                </div>
+                <div class="quick-card" data-user="kido">
+                    <div class="quick-avatar">🎬</div>
+                    <div class="quick-name">kido</div>
+                    <div class="quick-desc">Play Recap Filmes</div>
+                </div>
+                <div class="quick-card" data-user="seventor">
+                    <div class="quick-avatar">📖</div>
+                    <div class="quick-name">seventor</div>
+                    <div class="quick-desc">suas novelinhas aqui</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="profile-section" id="profileSection">
+            <div id="profileHeader"></div>
+            <div class="videos-container">
+                <div class="videos-grid" id="videosGrid"></div>
+                <div id="loadMoreTrigger" class="load-more"></div>
+            </div>
+        </section>
+
+        <section class="downloads-section" id="downloadsSection">
+            <div class="downloads-header">
+                <h3><i class="fas fa-tasks"></i> Downloads Ativos</h3>
+                <button id="clearDownloadsBtn" class="btn-clear-small"><i class="fas fa-trash"></i> Limpar</button>
+            </div>
+            <div id="downloadsList" class="downloads-list"></div>
+        </section>
+    </main>
+
+    <div class="modal" id="videoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Reproduzir vídeo</h3>
+                <button class="modal-close" id="modalClose"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="modal-body">
+                <video id="modalVideo" controls class="modal-video"></video>
+                <div class="modal-actions">
+                    <button id="modalDownloadVideo" class="btn-modal"><i class="fas fa-download"></i> Baixar Vídeo</button>
+                    <button id="modalDownloadAudio" class="btn-modal"><i class="fas fa-music"></i> Baixar MP3</button>
+                </div>
+                <div class="modal-info" id="modalInfo"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        (function() {
+            'use strict';
+
+            // DOM Elements
+            const urlInput = document.getElementById('urlInput');
+            const btnProcess = document.getElementById('btnProcess');
+            const profileSection = document.getElementById('profileSection');
+            const videosGrid = document.getElementById('videosGrid');
+            const profileHeader = document.getElementById('profileHeader');
+            const loadMoreTrigger = document.getElementById('loadMoreTrigger');
+            const downloadsSection = document.getElementById('downloadsSection');
+            const downloadsList = document.getElementById('downloadsList');
+            const clearDownloadsBtn = document.getElementById('clearDownloadsBtn');
+            const watermarkToggle = document.getElementById('watermarkToggle');
+            const drawerWatermarkToggle = document.getElementById('drawerWatermarkToggle');
+            const autoDownloadToggle = document.getElementById('autoDownloadToggle');
+            const menuBtn = document.getElementById('menuBtn');
+            const drawerOverlay = document.getElementById('drawerOverlay');
+            const drawerClose = document.getElementById('drawerClose');
+            const toastContainer = document.getElementById('toastContainer');
+            const quickGrid = document.getElementById('quickGrid');
+
+            // Modal
+            const modal = document.getElementById('videoModal');
+            const modalVideo = document.getElementById('modalVideo');
+            const modalTitle = document.getElementById('modalTitle');
+            const modalClose = document.getElementById('modalClose');
+            const modalDownloadVideo = document.getElementById('modalDownloadVideo');
+            const modalDownloadAudio = document.getElementById('modalDownloadAudio');
+            const modalInfo = document.getElementById('modalInfo');
+
+            // State
+            let currentUsername = null;
+            let currentCursor = 0;
+            let hasMore = true;
+            let isLoading = false;
+            let originalVideoId = null;
+            let currentVideoData = null;
+            let activeDownloads = [];
+            let downloadId = 1;
+
+            // API Base URL (Node.js server)
+            const API_BASE = '/api/';
+
+            // Helper Functions
+            function showToast(message, type) {
+                type = type || 'info';
+                const toast = document.createElement('div');
+                toast.className = 'toast ' + type;
+                let icon = 'ℹ️';
+                if (type === 'success') icon = '✅';
+                if (type === 'error') icon = '❌';
+                if (type === 'warning') icon = '⚠️';
+                toast.innerHTML = '<div class="toast-icon">' + icon + '</div><div class="toast-message">' + message + '</div>';
+                toastContainer.appendChild(toast);
+                setTimeout(function() { if (toast && toast.remove) toast.remove(); }, 3000);
+            }
+
+            function formatNumber(n) {
+                if (!n) return '0';
+                if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
+                if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
+                return n.toString();
+            }
+
+            function formatDuration(sec) {
+                var s = Math.floor(sec);
+                var mins = Math.floor(s / 60);
+                var secs = s % 60;
+                return (mins < 10 ? '0' + mins : mins) + ':' + (secs < 10 ? '0' + secs : secs);
+            }
+
+            function getVideoUrl(video) {
+                var useNoWatermark = (watermarkToggle && watermarkToggle.checked) || (drawerWatermarkToggle && drawerWatermarkToggle.checked);
+                if (useNoWatermark && video.play) return video.play;
+                if (video.hdplay) return video.hdplay;
+                if (video.wmplay) return video.wmplay;
+                return video.play;
+            }
+
+            function showLoading(show) {
+                if (show) {
+                    btnProcess.classList.add('loading');
+                    btnProcess.disabled = true;
+                } else {
+                    btnProcess.classList.remove('loading');
+                    btnProcess.disabled = false;
+                }
+            }
+
+            function escapeHtml(str) {
+                if (!str) return '';
+                return str.replace(/[&<>]/g, function(m) {
+                    if (m === '&') return '&amp;';
+                    if (m === '<') return '&lt;';
+                    if (m === '>') return '&gt;';
+                    return m;
+                });
+            }
+
+            // API Calls via Node.js proxy
+            async function fetchUserInfo(username) {
+                var res = await fetch(API_BASE + 'user/info?unique_id=' + encodeURIComponent(username));
+                var json = await res.json();
+                if (json.code !== 0) throw new Error(json.msg || 'Usuario nao encontrado');
+                return json.data;
+            }
+
+            async function fetchUserPosts(username, cursor) {
+                cursor = cursor || 0;
+                var url = API_BASE + 'user/posts?unique_id=' + encodeURIComponent(username) + '&cursor=' + cursor;
+                var res = await fetch(url);
+                var json = await res.json();
+                if (json.code !== 0) throw new Error(json.msg || 'Erro ao carregar videos');
+                return json.data;
+            }
+
+            async function resolveShortUrl(shortUrl) {
+                var res = await fetch(API_BASE + 'video/info?url=' + encodeURIComponent(shortUrl));
+                var json = await res.json();
+                if (json.code !== 0) throw new Error(json.msg || 'Link invalido');
+                var author = json.data && json.data.author ? json.data.author.unique_id : null;
+                var videoId = json.data ? json.data.video_id : null;
+                if (!author) throw new Error('Nao foi possivel identificar o autor');
+                return { username: author, videoId: videoId };
+            }
+
+            function extractUsername(url) {
+                var match = url.match(/tiktok\.com\/@([\w.]+)/i);
+                return match ? match[1] : null;
+            }
+
+            // Render Profile
+            function renderProfileHeader(user) {
+                var avatarUrl = user.avatar_larger || user.avatar || '';
+                profileHeader.innerHTML = `
+                    <div class="profile-avatar">
+                        <img src="` + avatarUrl + `" onerror="this.src='https://via.placeholder.com/64'">
+                    </div>
+                    <div class="profile-info">
+                        <h2>@` + escapeHtml(user.unique_id) + `</h2>
+                        <p>` + escapeHtml(user.signature || '') + `</p>
+                        <div class="profile-stats">
+                            <span><i class="fas fa-heart"></i> ` + formatNumber(user.digg_count) + `</span>
+                            <span><i class="fas fa-users"></i> ` + formatNumber(user.follower_count) + `</span>
+                            <span><i class="fas fa-video"></i> ` + formatNumber(user.video_count) + `</span>
+                        </div>
+                    </div>
+                `;
+            }
+
+            function renderVideos(videos, highlightId) {
+                if (!videos || videos.length === 0) {
+                    videosGrid.innerHTML = '<div class="empty-state">Nenhum video encontrado</div>';
+                    return;
+                }
+                var html = '';
+                for (var i = 0; i < videos.length; i++) {
+                    var video = videos[i];
+                    var isOriginal = (video.video_id == highlightId) ? 'original' : '';
+                    html += `
+                        <div class="video-card ` + isOriginal + `" data-video='` + JSON.stringify(video).replace(/'/g, "&#39;") + `'>
+                            <div class="video-thumb">
+                                <img src="` + video.cover + `" loading="lazy" onerror="this.src='https://via.placeholder.com/200x350'">
+                                <span class="video-duration">` + formatDuration(video.duration) + `</span>
+                            </div>
+                            <div class="video-stats">
+                                <span><i class="fas fa-play"></i> ` + formatNumber(video.play_count) + `</span>
+                                <span><i class="fas fa-heart"></i> ` + formatNumber(video.digg_count) + `</span>
+                            </div>
+                        </div>
+                    `;
+                }
+                videosGrid.innerHTML = html;
+                attachVideoClickEvents();
+            }
+
+            function appendVideos(videos, highlightId) {
+                if (!videos || videos.length === 0) return;
+                for (var i = 0; i < videos.length; i++) {
+                    var video = videos[i];
+                    var div = document.createElement('div');
+                    var isOriginal = (video.video_id == highlightId) ? 'original' : '';
+                    div.className = 'video-card ' + isOriginal;
+                    div.setAttribute('data-video', JSON.stringify(video));
+                    div.innerHTML = `
+                        <div class="video-thumb">
+                            <img src="` + video.cover + `" loading="lazy">
+                            <span class="video-duration">` + formatDuration(video.duration) + `</span>
+                        </div>
+                        <div class="video-stats">
+                            <span><i class="fas fa-play"></i> ` + formatNumber(video.play_count) + `</span>
+                            <span><i class="fas fa-heart"></i> ` + formatNumber(video.digg_count) + `</span>
+                        </div>
+                    `;
+                    videosGrid.appendChild(div);
+                }
+                attachVideoClickEvents();
+            }
+
+            function attachVideoClickEvents() {
+                var cards = document.querySelectorAll('.video-card');
+                for (var i = 0; i < cards.length; i++) {
+                    cards[i].addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        var videoData = this.getAttribute('data-video');
+                        if (videoData) {
+                            var video = JSON.parse(videoData);
+                            openVideoModal(video);
+                        }
+                    });
+                }
+            }
+
+            // Load Profile
+            async function loadProfile(username, highlightId) {
+                showLoading(true);
+                profileSection.style.display = 'block';
+                if (downloadsSection) downloadsSection.style.display = 'none';
+                
+                try {
+                    var userInfo = await fetchUserInfo(username);
+                    var firstBatch = await fetchUserPosts(username, 0);
+                    
+                    currentUsername = username;
+                    currentCursor = firstBatch.cursor || 0;
+                    hasMore = firstBatch.has_more || false;
+                    originalVideoId = highlightId;
+                    
+                    renderProfileHeader(userInfo.user);
+                    renderVideos(firstBatch.videos || [], highlightId);
+                    setupInfiniteScroll();
+                    
+                    showToast('@' + username + ' - ' + (firstBatch.videos ? firstBatch.videos.length : 0) + ' videos carregados', 'success');
+                } catch(err) {
+                    console.error(err);
+                    showToast(err.message, 'error');
+                    profileSection.style.display = 'none';
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            async function loadMore() {
+                if (isLoading || !hasMore) return;
+                isLoading = true;
+                if (loadMoreTrigger) loadMoreTrigger.innerHTML = '<div class="spinner-small"></div>';
+                
+                try {
+                    var data = await fetchUserPosts(currentUsername, currentCursor);
+                    appendVideos(data.videos || [], originalVideoId);
+                    currentCursor = data.cursor || 0;
+                    hasMore = data.has_more || false;
+                } catch(err) {
+                    showToast('Erro ao carregar mais videos', 'error');
+                } finally {
+                    isLoading = false;
+                    if (loadMoreTrigger) loadMoreTrigger.innerHTML = '';
+                }
+            }
+
+            function setupInfiniteScroll() {
+                if (!loadMoreTrigger) return;
+                var observer = new IntersectionObserver(function(entries) {
+                    if (entries[0].isIntersecting && hasMore && !isLoading) {
+                        loadMore();
+                    }
+                }, { threshold: 0.1, rootMargin: '100px' });
+                observer.observe(loadMoreTrigger);
+            }
+
+            // Video Modal
+            function openVideoModal(video) {
+                currentVideoData = video;
+                var videoUrl = getVideoUrl(video);
+                modalTitle.textContent = (video.title ? video.title.substring(0, 60) : 'Video TikTok');
+                modalVideo.src = videoUrl;
+                modalInfo.innerHTML = `
+                    <i class="fas fa-play"></i> ` + formatNumber(video.play_count) + ` visualizacoes |
+                    <i class="fas fa-heart"></i> ` + formatNumber(video.digg_count) + ` likes |
+                    <i class="fas fa-comment"></i> ` + formatNumber(video.comment_count) + ` comentarios
+                `;
+                modal.classList.add('active');
+                modalVideo.load();
+                modalVideo.play().catch(function() {});
+            }
+
+            // Download System
+            async function downloadFile(url, filename) {
+                try {
+                    var response = await fetch(url);
+                    var blob = await response.blob();
+                    var blobUrl = URL.createObjectURL(blob);
+                    var a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(blobUrl);
+                    return true;
+                } catch(err) {
+                    window.open(url, '_blank');
+                    return true;
+                }
+            }
+
+            function addToDownloadQueue(video, type) {
+                type = type || 'video';
+                var id = downloadId++;
+                var videoUrl = getVideoUrl(video);
+                var safeTitle = (video.title ? video.title.substring(0, 30) : 'video').replace(/[^a-z0-9]/gi, '_');
+                var filename = (type === 'video') 
+                    ? safeTitle + '_' + video.video_id + '.mp4'
+                    : safeTitle + '_' + video.video_id + '.mp3';
+                
+                var audioUrl = video.music || video.music_url || video.play;
+                var downloadUrl = (type === 'video') ? videoUrl : audioUrl;
+                
+                var downloadItem = {
+                    id: id,
+                    url: downloadUrl,
+                    title: video.title ? video.title.substring(0, 40) : 'Video',
+                    thumb: video.cover,
+                    progress: 0,
+                    status: 'pending',
+                    filename: filename
+                };
+                
+                activeDownloads.push(downloadItem);
+                updateDownloadsUI();
+                processDownloadQueue();
+                showToast(downloadItem.title + ' adicionado a fila', 'info');
+            }
+
+            function processDownloadQueue() {
+                var activeCount = 0;
+                for (var i = 0; i < activeDownloads.length; i++) {
+                    if (activeDownloads[i].status === 'downloading') activeCount++;
+                }
+                var pending = null;
+                for (var i = 0; i < activeDownloads.length; i++) {
+                    if (activeDownloads[i].status === 'pending') {
+                        pending = activeDownloads[i];
+                        break;
+                    }
+                }
+                if (pending && activeCount < 3) {
+                    startDownload(pending);
+                }
+            }
+
+            function startDownload(download) {
+                download.status = 'downloading';
+                updateDownloadsUI();
+                
+                var xhr = new XMLHttpRequest();
+                download.xhr = xhr;
+                xhr.open('GET', download.url, true);
+                xhr.responseType = 'blob';
+                
+                xhr.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        download.progress = Math.round((e.loaded / e.total) * 100);
+                        updateDownloadsUI();
+                    }
+                };
+                
+                xhr.onload = function() {
+                    if (xhr.status === 200) {
+                        var blob = xhr.response;
+                        var blobUrl = URL.createObjectURL(blob);
+                        var a = document.createElement('a');
+                        a.href = blobUrl;
+                        a.download = download.filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        document.body.removeChild(a);
+                        URL.revokeObjectURL(blobUrl);
+                        download.status = 'completed';
+                        download.progress = 100;
+                        showToast('✅ ' + download.title + ' baixado!', 'success');
+                    } else {
+                        download.status = 'error';
+                        showToast('❌ Erro: ' + download.title, 'error');
+                    }
+                    updateDownloadsUI();
+                    processDownloadQueue();
+                };
+                
+                xhr.onerror = function() {
+                    download.status = 'error';
+                    updateDownloadsUI();
+                    processDownloadQueue();
+                };
+                
+                xhr.send();
+            }
+
+            function updateDownloadsUI() {
+                var activeCount = 0;
+                for (var i = 0; i < activeDownloads.length; i++) {
+                    if (activeDownloads[i].status !== 'completed') activeCount++;
+                }
+                var downloadsHeader = document.querySelector('#downloadsSection .downloads-header h3');
+                if (downloadsHeader) {
+                    downloadsHeader.innerHTML = '<i class="fas fa-tasks"></i> Downloads Ativos ' + (activeCount > 0 ? '(' + activeCount + ')' : '');
+                }
+                
+                if (activeDownloads.length === 0) {
+                    downloadsList.innerHTML = '<div class="empty-state"><i class="fas fa-check-circle"></i> Nenhum download ativo</div>';
+                    return;
+                }
+                
+                var html = '';
+                for (var i = 0; i < activeDownloads.length; i++) {
+                    var d = activeDownloads[i];
+                    var thumbHtml = d.thumb ? '<img src="' + d.thumb + '" class="download-thumb">' : '<div class="download-thumb" style="background:#333"></div>';
+                    var statusText = '';
+                    if (d.status === 'pending') statusText = '⏳ Aguardando...';
+                    else if (d.status === 'downloading') statusText = '⬇️ Baixando ' + d.progress + '%';
+                    else if (d.status === 'completed') statusText = '✅ Concluido';
+                    else statusText = '❌ Erro';
+                    
+                    html += `
+                        <div class="download-item">
+                            ` + thumbHtml + `
+                            <div class="download-info">
+                                <div class="download-title">` + escapeHtml(d.title) + `</div>
+                                <div class="download-progress"><div class="download-progress-bar" style="width:` + d.progress + `%"></div></div>
+                                <div class="download-status">` + statusText + `</div>
+                            </div>
+                        </div>
+                    `;
+                }
+                downloadsList.innerHTML = html;
+            }
+
+            function clearCompletedDownloads() {
+                var newList = [];
+                for (var i = 0; i < activeDownloads.length; i++) {
+                    if (activeDownloads[i].status !== 'completed') {
+                        newList.push(activeDownloads[i]);
+                    }
+                }
+                activeDownloads = newList;
+                updateDownloadsUI();
+                showToast('Downloads concluidos removidos', 'success');
+            }
+
+            function showDownloadsTab() {
+                profileSection.style.display = 'none';
+                if (downloadsSection) downloadsSection.style.display = 'block';
+                updateDownloadsUI();
+            }
+
+            // Batch Download
+            function addBatchDownloadButton() {
+                var container = document.querySelector('.videos-container');
+                if (!container) return;
+                var existingBtn = document.getElementById('batchDownloadBtn');
+                if (existingBtn) existingBtn.remove();
+                
+                var btn = document.createElement('button');
+                btn.id = 'batchDownloadBtn';
+                btn.className = 'batch-download-btn';
+                btn.innerHTML = '<i class="fas fa-download"></i> Baixar todos os videos desta pagina';
+                btn.onclick = function() {
+                    var cards = document.querySelectorAll('.video-card');
+                    if (cards.length === 0) return;
+                    for (var i = 0; i < cards.length; i++) {
+                        var videoData = cards[i].getAttribute('data-video');
+                        if (videoData) {
+                            var video = JSON.parse(videoData);
+                            addToDownloadQueue(video, 'video');
+                        }
+                    }
+                    showDownloadsTab();
+                    showToast(cards.length + ' videos adicionados a fila', 'success');
+                };
+                container.insertBefore(btn, container.firstChild);
+            }
+
+            // Main Process
+            async function processMainUrl(rawUrl) {
+                var url = rawUrl ? rawUrl.trim() : '';
+                if (!url) {
+                    showToast('Cole um link do TikTok', 'warning');
+                    return;
+                }
+                
+                showLoading(true);
+                
+                try {
+                    var username = extractUsername(url);
+                    var highlightId = null;
+                    
+                    if (!username) {
+                        var resolved = await resolveShortUrl(url);
+                        username = resolved.username;
+                        highlightId = resolved.videoId;
+                    }
+                    
+                    await loadProfile(username, highlightId);
+                } catch(err) {
+                    showToast(err.message, 'error');
+                    profileSection.style.display = 'none';
+                } finally {
+                    showLoading(false);
+                }
+            }
+
+            // Drawer
+            function toggleDrawer() {
+                if (drawerOverlay) drawerOverlay.classList.toggle('active');
+            }
+
+            function closeDrawer() {
+                if (drawerOverlay) drawerOverlay.classList.remove('active');
+            }
+
+            // Quick Access
+            function setupQuickAccess() {
+                if (!quickGrid) return;
+                var cards = quickGrid.querySelectorAll('.quick-card');
+                for (var i = 0; i < cards.length; i++) {
+                    cards[i].addEventListener('click', function() {
+                        var user = this.getAttribute('data-user');
+                        if (user) {
+                            urlInput.value = 'https://tiktok.com/@' + user;
+                            processMainUrl(urlInput.value);
+                        }
+                    });
+                }
+            }
+
+            // Observer for batch button
+            function setupBatchButtonObserver() {
+                var observer = new MutationObserver(function() {
+                    var hasVideos = document.querySelectorAll('.video-card').length > 0;
+                    var hasBtn = document.getElementById('batchDownloadBtn');
+                    if (hasVideos && !hasBtn) {
+                        addBatchDownloadButton();
+                    }
+                });
+                observer.observe(videosGrid, { childList: true, subtree: true });
+            }
+
+            // Modal Events
+            function setupModalEvents() {
+                if (modalDownloadVideo) {
+                    modalDownloadVideo.onclick = function() {
+                        if (currentVideoData) {
+                            addToDownloadQueue(currentVideoData, 'video');
+                            showDownloadsTab();
+                            showToast('Video adicionado a fila', 'success');
+                        }
+                    };
+                }
+                
+                if (modalDownloadAudio) {
+                    modalDownloadAudio.onclick = function() {
+                        if (currentVideoData) {
+                            var audioUrl = currentVideoData.music || currentVideoData.music_url || currentVideoData.play;
+                            if (audioUrl) {
+                                var id = downloadId++;
+                                var safeTitle = (currentVideoData.title ? currentVideoData.title.substring(0, 30) : 'audio').replace(/[^a-z0-9]/gi, '_');
+                                var downloadItem = {
+                                    id: id,
+                                    url: audioUrl,
+                                    title: currentVideoData.title ? currentVideoData.title.substring(0, 40) : 'Audio',
+                                    thumb: currentVideoData.cover,
+                                    progress: 0,
+                                    status: 'pending',
+                                    filename: safeTitle + '_' + currentVideoData.video_id + '.mp3'
+                                };
+                                activeDownloads.push(downloadItem);
+                                updateDownloadsUI();
+                                processDownloadQueue();
+                                showDownloadsTab();
+                                showToast('Audio adicionado a fila', 'success');
+                            } else {
+                                showToast('Audio nao disponivel', 'error');
+                            }
+                        }
+                    };
+                }
+                
+                if (modalClose) {
+                    modalClose.onclick = function() {
+                        modal.classList.remove('active');
+                        modalVideo.pause();
+                        modalVideo.src = '';
+                    };
+                }
+                
+                if (modal) {
+                    modal.onclick = function(e) {
+                        if (e.target === modal) {
+                            modal.classList.remove('active');
+                            modalVideo.pause();
+                            modalVideo.src = '';
+                        }
+                    };
+                }
+            }
+
+            // Event Listeners
+            function setupEventListeners() {
+                if (btnProcess) {
+                    btnProcess.addEventListener('click', function() { processMainUrl(urlInput ? urlInput.value : ''); });
+                }
+                if (urlInput) {
+                    urlInput.addEventListener('keypress', function(e) { if (e.key === 'Enter') processMainUrl(urlInput.value); });
+                }
+                if (clearDownloadsBtn) {
+                    clearDownloadsBtn.addEventListener('click', clearCompletedDownloads);
+                }
+                if (menuBtn) {
+                    menuBtn.addEventListener('click', toggleDrawer);
+                }
+                if (drawerClose) {
+                    drawerClose.addEventListener('click', closeDrawer);
+                }
+                if (drawerOverlay) {
+                    drawerOverlay.addEventListener('click', function(e) { if (e.target === drawerOverlay) closeDrawer(); });
+                }
+                if (watermarkToggle && drawerWatermarkToggle) {
+                    watermarkToggle.addEventListener('change', function() {
+                        drawerWatermarkToggle.checked = watermarkToggle.checked;
+                        showToast(watermarkToggle.checked ? 'Sem marca dagua ativado' : 'Com marca dagua', 'info');
+                    });
+                    drawerWatermarkToggle.addEventListener('change', function() {
+                        watermarkToggle.checked = drawerWatermarkToggle.checked;
+                    });
+                }
+                if (autoDownloadToggle) {
+                    autoDownloadToggle.addEventListener('change', function() {
+                        showToast(autoDownloadToggle.checked ? 'Download automatico ativado' : 'Download automatico desativado', 'info');
+                    });
+                }
+            }
+
+            // Init
+            function init() {
+                setupEventListeners();
+                setupQuickAccess();
+                setupModalEvents();
+                setupBatchButtonObserver();
+                showToast('AhaTik Downloader pronto! Cole um link do TikTok.', 'success');
+            }
+            
+            init();
+        })();
+    </script>
+</body>
+</html>
