@@ -1,14 +1,16 @@
-{
-  "name": "ahatiktok-downloader",
-  "version": "1.0.0",
-  "description": "Baixador de TikTok em lote",
-  "main": "server.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "axios": "^1.6.0"
-  }
-}
+module.exports = {
+  apps: [{
+    name: 'videosnap',
+    script: 'server.js',
+    instances: 1,
+    exec_mode: 'fork',
+    env: {
+      NODE_ENV: 'production',
+      PORT: 3000
+    },
+    error_file: './logs/err.log',
+    out_file: './logs/out.log',
+    log_file: './logs/combined.log',
+    time: true
+  }]
+};
