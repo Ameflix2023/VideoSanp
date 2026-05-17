@@ -15,11 +15,11 @@ app.use(express.static(path.join(__dirname, '/')));
 const TIMEOUT = 30000;
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
 
-// Cache simples para evitar muitas requisições
+// Cache simples
 const cache = new Map();
-const CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+const CACHE_TTL = 5 * 60 * 1000;
 
-// Função para fazer requisição com retry
+// Função para requisição com retry
 async function fetchWithRetry(url, retries = 2) {
     for (let i = 0; i <= retries; i++) {
         try {
@@ -66,7 +66,7 @@ app.get('/api/user/info', async (req, res) => {
     }
 });
 
-// Endpoint: Posts do usuário (com paginação)
+// Endpoint: Posts do usuário
 app.get('/api/user/posts', async (req, res) => {
     const { unique_id, cursor = 0, count = 21 } = req.query;
     
@@ -97,7 +97,7 @@ app.get('/api/user/posts', async (req, res) => {
     }
 });
 
-// Endpoint: Resolver link de vídeo (encurtado ou direto)
+// Endpoint: Resolver link de vídeo
 app.get('/api/video/info', async (req, res) => {
     const { url } = req.query;
     
@@ -128,7 +128,7 @@ app.get('/api/video/info', async (req, res) => {
     }
 });
 
-// Endpoint: Proxy para download direto do vídeo
+// Endpoint: Proxy para download
 app.get('/api/download', async (req, res) => {
     const { video_url } = req.query;
     
@@ -158,14 +158,25 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'index.html'));
 });
 
+// Rota de saúde (para monitoramento)
+app.get('/health', (req, res) => {
+    res.json({ status: 'online', timestamp: new Date().toISOString() });
+});
+
 // Limpar cache a cada hora
 setInterval(() => {
     cache.clear();
-    console.log('Cache limpo');
+    console.log('🗑️ Cache limpo');
 }, 60 * 60 * 1000);
 
-// Iniciar servidor
+// Iniciar servidor - CORREÇÃO: escutando em 0.0.0.0
 app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Servidor rodando em http://localhost:${PORT}`);
-    console.log(`📱 Acesse no navegador: http://SEU_IP_VPS:${PORT}`);
+    console.log(`
+    ╔════════════════════════════════════════╗
+    ║     🚀 AhaTik Downloader Rodando!      ║
+    ╠════════════════════════════════════════╣
+    ║  📱 Local: http://localhost:${PORT}     ║
+    ║  🌐 Rede: http://SEU_IP_VPS:${PORT}     ║
+    ╚════════════════════════════════════════╝
+    `);
 });
